@@ -42,7 +42,7 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     padding: 14px;
     position: relative;
