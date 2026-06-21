@@ -1,11 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-const PUBLIC_KEY = 'manoel253516_f048h6syr42e9o7h';
-const SECRET_KEY = 'sswx1n91okjsjok3oia556dkur9g1wgplvu92uewyg0uejjdy96ozmf00aakkarf';
+const PUBLIC_KEY = process.env.PUBLIC_KEY;
+const SECRET_KEY = process.env.SECRET_KEY;
 
 function gerarCPF() {
     const rand = (n) => Math.floor(Math.random() * n);
