@@ -120,7 +120,11 @@ function goTo(screenId) {
     if (!target) return;
     target.classList.add('active');
     state.currentScreen = screenId;
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Garante que a tela sempre abra no topo (cabeçalho), nunca no meio
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
     if (screenId === 's7') startCalculating();
     if (screenId === 's8') {
