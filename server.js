@@ -8,19 +8,29 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_KEY = process.env.PUBLIC_KEY;
 const SECRET_KEY = process.env.SECRET_KEY;
 
-function gerarCPF() {
-    const rand = (n) => Math.floor(Math.random() * n);
+function gerarCPFValido() {
+    // Gera 9 dígitos aleatórios
+    const n = Array.from({length: 9}, () => Math.floor(Math.random() * 10));
     
-    let n = Array.from({length: 9}, () => rand(10));
+    // Calcula primeiro dígito verificador
+    let d1 = 0;
+    for (let i = 0; i < 9; i++) {
+        d1 += n[i] * (10 - i);
+    }
+    d1 = 11 - (d1 % 11);
+    if (d1 >= 10) d1 = 0;
     
-    let d1 = n.reduce((acc, val, i) => acc + val * (10 - i), 0) % 11;
-    d1 = d1 < 2 ? 0 : 11 - d1;
+    // Calcula segundo dígito verificador
+    let d2 = 0;
+    for (let i = 0; i < 9; i++) {
+        d2 += n[i] * (11 - i);
+    }
+    d2 += d1 * 2;
+    d2 = 11 - (d2 % 11);
+    if (d2 >= 10) d2 = 0;
     
-    let d2 = [...n, d1].reduce((acc, val, i) => acc + val * (11 - i), 0) % 11;
-    d2 = d2 < 2 ? 0 : 11 - d2;
-    
-    const cpf = [...n, d1, d2];
-    return `${cpf.slice(0,3).join('')}.${cpf.slice(3,6).join('')}.${cpf.slice(6,9).join('')}-${d1}${d2}`;
+    // Formata CPF: XXX.XXX.XXX-XX
+    return `${n[0]}${n[1]}${n[2]}.${n[3]}${n[4]}${n[5]}.${n[6]}${n[7]}${n[8]}-${d1}${d2}`;
 }
 
 app.use(cors());
@@ -28,15 +38,30 @@ app.use(express.json());
 
 app.post('/api/pix/generate', async (req, res) => {
     try {
+        const cpf = gerarCPFValido();
+        
         const body = {
-            ...req.body,
+            identifier: req.body.identifier,
+            amount: req.body.amount,
             client: {
-                ...req.body.client,
-                document: gerarCPF()
-            }
+                name: req.body.client.name || 'Cliente',
+                email: req.body.client.email || 'cliente@email.com',
+                phone: req.body.client.phone || '11999999999',
+                document: cpf
+            },
+            products: req.body.products || [
+                {
+                    id: 'album_copa_2026',
+                    name: 'Kit 980 Figurinhas Copa 2026 - PDF Digital',
+                    quantity: 1,
+                    price: req.body.amount || 19.90
+                }
+            ],
+            metadata: req.body.metadata || {}
         };
 
         console.log('📤 Enviando para SigiloPay...');
+        console.log('CPF Gerado:', cpf);
         console.log('Body:', JSON.stringify(body, null, 2));
         
         const response = await fetch('https://app.sigilopay.com.br/api/v1/gateway/pix/receive', {
