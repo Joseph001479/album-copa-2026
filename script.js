@@ -277,7 +277,7 @@ async function fetchQrCodeFromAPI() {
         qrCodeText.style.display = 'none';
         btnCopy.style.display = 'none';
 
-        var response = await fetch('http://localhost:3000/api/pix/generate', {
+        var response = await fetch('https://album-copa-2026-5liy.onrender.com/api/pix/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
