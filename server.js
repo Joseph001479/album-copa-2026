@@ -1,26 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 const PUBLIC_KEY = process.env.PUBLIC_KEY;
 const SECRET_KEY = process.env.SECRET_KEY;
 
 function gerarCPFValido() {
-    // Gera 9 dígitos aleatórios
     const n = Array.from({length: 9}, () => Math.floor(Math.random() * 10));
-    
-    // Calcula primeiro dígito verificador
+
     let d1 = 0;
     for (let i = 0; i < 9; i++) {
         d1 += n[i] * (10 - i);
     }
     d1 = 11 - (d1 % 11);
     if (d1 >= 10) d1 = 0;
-    
-    // Calcula segundo dígito verificador
+
     let d2 = 0;
     for (let i = 0; i < 9; i++) {
         d2 += n[i] * (11 - i);
@@ -28,18 +23,22 @@ function gerarCPFValido() {
     d2 += d1 * 2;
     d2 = 11 - (d2 % 11);
     if (d2 >= 10) d2 = 0;
-    
-    // Formata CPF: XXX.XXX.XXX-XX
+
     return `${n[0]}${n[1]}${n[2]}.${n[3]}${n[4]}${n[5]}.${n[6]}${n[7]}${n[8]}-${d1}${d2}`;
 }
 
 app.use(cors());
 app.use(express.json());
 
+// Health check
+app.get('/', (req, res) => {
+    res.status(200).json({ status: 'online' });
+});
+
 app.post('/api/pix/generate', async (req, res) => {
     try {
         const cpf = gerarCPFValido();
-        
+
         const body = {
             identifier: req.body.identifier,
             amount: req.body.amount,
@@ -59,11 +58,10 @@ app.post('/api/pix/generate', async (req, res) => {
             ],
             metadata: req.body.metadata || {}
         };
-
         console.log('📤 Enviando para SigiloPay...');
         console.log('CPF Gerado:', cpf);
         console.log('Body:', JSON.stringify(body, null, 2));
-        
+
         const response = await fetch('https://app.sigilopay.com.br/api/v1/gateway/pix/receive', {
             method: 'POST',
             headers: {
@@ -73,12 +71,12 @@ app.post('/api/pix/generate', async (req, res) => {
             },
             body: JSON.stringify(body)
         });
-        
+
         const data = await response.json();
         console.log('📥 Resposta SigiloPay:', JSON.stringify(data, null, 2));
-        
+
         res.json(data);
-        
+
     } catch (error) {
         console.error('❌ Erro no proxy:', error.message);
         res.status(500).json({ error: error.message });
